@@ -5,7 +5,6 @@ import warnings
 from distutils.version import LooseVersion
 import project_tests as tests
 
-
 # Check TensorFlow Version
 assert LooseVersion(tf.__version__) >= LooseVersion('1.0'), 'Please use TensorFlow version 1.0 or newer.  You are using {}'.format(tf.__version__)
 print('TensorFlow Version: {}'.format(tf.__version__))
@@ -15,7 +14,6 @@ if not tf.test.gpu_device_name():
     warnings.warn('No GPU found. Please use a GPU to train your neural network.')
 else:
     print('Default GPU Device: {}'.format(tf.test.gpu_device_name()))
-
 
 def load_vgg(sess, vgg_path):
     """
@@ -61,15 +59,15 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
                                         1,              #kernel size
                                         strides=(1, 1),
                                         padding="same",
-                                        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+                                        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3), kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
 
     # Upsample output of the conv_1x1 layer by 2
     upsample1 = tf.layers.conv2d_transpose( conv_1x1_layer7, #input layer
                                             num_classes,
-                                            (2,2), #kernel size
-                                            strides=(2, 2),
+                                            4, #kernel size
+                                            strides=2,
                                             padding="same",
-                                            kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+                                            kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3), kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
 
     # Passing vgg_layer4_out through convolution operation to ensure dimensions match for the add operation
     conv_1x1_layer4 = tf.layers.conv2d( vgg_layer4_out, #input layer
@@ -77,15 +75,15 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
                                         1,              #kernel size
                                         strides=(1, 1),
                                         padding="same",
-                                        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+                                        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3), kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
 
     skip1 = tf.add(upsample1, conv_1x1_layer4)
     upsample2 = tf.layers.conv2d_transpose( skip1,
                                             num_classes,
-                                            (2,2), #kernel size
-                                            strides=(2, 2),
+                                            4, #kernel size
+                                            strides=2,
                                             padding="same",
-                                            kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+                                            kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3), kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
 
     # Passing vgg_layer3_out through convolution operation to ensure dimensions match for the add operation
     conv_1x1_layer3 = tf.layers.conv2d( vgg_layer3_out, #input layer
@@ -93,17 +91,18 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
                                         1,              #kernel size
                                         strides=(1, 1),
                                         padding="same",
-                                        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+                                        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3), kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
 
     skip2 = tf.add(upsample2, conv_1x1_layer3)
-    upsample3 = tf.layers.conv2d_transpose( skip2, #input layer
+    output_layer = tf.layers.conv2d_transpose( skip2, #input layer
                                             num_classes,
-                                            (8,8), #kernel size
-                                            strides=(8, 8),
+                                            16, #kernel size
+                                            strides=8,
                                             padding="same",
-                                            kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+                                            kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3), kernel_initializer=tf.truncated_normal_initializer(stddev=0.01),
+                                            name="output_layer")
 
-    return upsample3
+    return output_layer
 tests.test_layers(layers)
 
 
@@ -157,11 +156,10 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
 tests.test_train_nn(train_nn)
 
 
-def run():
+def train_model():
     num_classes = 2
     image_shape = (160, 576)
     data_dir = './data'
-    runs_dir = './runs'
     tests.test_for_kitti_dataset(data_dir)
 
     # tunable parameters
@@ -200,11 +198,36 @@ def run():
         train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_loss, input_image,
                      correct_label, keep_prob, learning_rate)
 
+        # Save the trained model
+        saver = tf.train.Saver()
+        saver.save(sess, 'my_model')
+
+
+def perform_prediction():
+    num_classes = 2
+    data_dir = './data'
+    runs_dir = './runs'
+    image_shape = (160, 576)
+
+    # Defining Tensors
+    keep_prob = tf.placeholder(tf.float32)
+
+    with tf.Session() as sess:
+        # Restore the trained graph for prediction
+        # Load meta graph and restore weights
+        saver = tf.train.import_meta_graph('my_model.meta')
+        saver.restore(sess,tf.train.latest_checkpoint('./'))
+
+        graph = tf.get_default_graph()
+        output_layer = graph.get_tensor_by_name('output_layer:0')
+        logits = tf.reshape(output_layer, (-1, num_classes))
+        input_image = graph.get_tensor_by_name('image_input:0')
+
         # Save inference data using helper.save_inference_samples
         helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, input_image)
 
         # OPTIONAL: Apply the trained model to a video
 
-
 if __name__ == '__main__':
-    run()
+    train_model()
+    perform_prediction()
