@@ -10,7 +10,9 @@ Make sure you have the following is installed:
  - [NumPy](http://www.numpy.org/)
  - [SciPy](https://www.scipy.org/)
 ##### Dataset
-Download the [Kitti Road dataset](http://www.cvlibs.net/datasets/kitti/eval_road.php) from [here](http://www.cvlibs.net/download.php?file=data_road.zip).  Extract the dataset in the `data` folder.  This will create the folder `data_road` with all the training a test images.
+Download the [Kitti Road dataset](http://www.cvlibs.net/datasets/kitti/eval_road.php) from [here](http://kitti.is.tue.mpg.de/kitti/data_road.zip). Extract the dataset in the `data` folder. This will create the folder `data_road` with all the training a test images.
+
+It is also easier to download the VGG network directly from [here](https://s3-us-west-1.amazonaws.com/udacity-selfdrivingcar/vgg.zip). Otherwise, the helper functions will download that for you but it might be slower.
 
 ### Start
 ##### Implement
@@ -21,16 +23,3 @@ Run the following command to run the project:
 ```
 python main.py
 ```
-**Note** If running this in Jupyter Notebook system messages, such as those regarding test status, may appear in the terminal rather than the notebook.
-
-### Submission
-1. Ensure you've passed all the unit tests.
-2. Ensure you pass all points on [the rubric](https://review.udacity.com/#!/rubrics/989/view).
-3. Submit the following in a zip file.
- - `helper.py`
- - `main.py`
- - `project_tests.py`
- - Newest inference images from `runs` folder  (**all images from the most recent run**)
- 
- ## How to write a README
-A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
