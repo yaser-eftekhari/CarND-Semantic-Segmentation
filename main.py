@@ -6,7 +6,8 @@ from distutils.version import LooseVersion
 import project_tests as tests
 
 # Check TensorFlow Version
-assert LooseVersion(tf.__version__) >= LooseVersion('1.0'), 'Please use TensorFlow version 1.0 or newer.  You are using {}'.format(tf.__version__)
+assert LooseVersion(tf.__version__) >= LooseVersion(
+    '1.0'), 'Please use TensorFlow version 1.0 or newer.  You are using {}'.format(tf.__version__)
 print('TensorFlow Version: {}'.format(tf.__version__))
 
 # Check for a GPU
@@ -14,6 +15,7 @@ if not tf.test.gpu_device_name():
     warnings.warn('No GPU found. Please use a GPU to train your neural network.')
 else:
     print('Default GPU Device: {}'.format(tf.test.gpu_device_name()))
+
 
 def load_vgg(sess, vgg_path):
     """
@@ -40,6 +42,8 @@ def load_vgg(sess, vgg_path):
     layer7_out = graph.get_tensor_by_name(vgg_layer7_out_tensor_name)
 
     return image_input, keep_prob, layer3_out, layer4_out, layer7_out
+
+
 tests.test_load_vgg(load_vgg, tf)
 
 
@@ -54,55 +58,63 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     """
 
     # Passing vgg_layer7_out through convolution operation
-    conv_1x1_layer7 = tf.layers.conv2d( vgg_layer7_out, #input layer
-                                        num_classes,
-                                        1,              #kernel size
-                                        strides=(1, 1),
-                                        padding="same",
-                                        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3), kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
+    conv_1x1_layer7 = tf.layers.conv2d(vgg_layer7_out,  # input layer
+                                       num_classes,
+                                       1,  # kernel size
+                                       strides=(1, 1),
+                                       padding="same",
+                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3),
+                                       kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
 
     # Upsample output of the conv_1x1 layer by 2
-    upsample1 = tf.layers.conv2d_transpose( conv_1x1_layer7, #input layer
-                                            num_classes,
-                                            4, #kernel size
-                                            strides=2,
-                                            padding="same",
-                                            kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3), kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
+    upsample1 = tf.layers.conv2d_transpose(conv_1x1_layer7,  # input layer
+                                           num_classes,
+                                           4,  # kernel size
+                                           strides=2,
+                                           padding="same",
+                                           kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3),
+                                           kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
 
     # Passing vgg_layer4_out through convolution operation to ensure dimensions match for the add operation
-    conv_1x1_layer4 = tf.layers.conv2d( vgg_layer4_out, #input layer
-                                        num_classes,
-                                        1,              #kernel size
-                                        strides=(1, 1),
-                                        padding="same",
-                                        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3), kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
+    conv_1x1_layer4 = tf.layers.conv2d(vgg_layer4_out,  # input layer
+                                       num_classes,
+                                       1,  # kernel size
+                                       strides=(1, 1),
+                                       padding="same",
+                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3),
+                                       kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
 
     skip1 = tf.add(upsample1, conv_1x1_layer4)
-    upsample2 = tf.layers.conv2d_transpose( skip1,
-                                            num_classes,
-                                            4, #kernel size
-                                            strides=2,
-                                            padding="same",
-                                            kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3), kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
+    upsample2 = tf.layers.conv2d_transpose(skip1,
+                                           num_classes,
+                                           4,  # kernel size
+                                           strides=2,
+                                           padding="same",
+                                           kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3),
+                                           kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
 
     # Passing vgg_layer3_out through convolution operation to ensure dimensions match for the add operation
-    conv_1x1_layer3 = tf.layers.conv2d( vgg_layer3_out, #input layer
-                                        num_classes,
-                                        1,              #kernel size
-                                        strides=(1, 1),
-                                        padding="same",
-                                        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3), kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
+    conv_1x1_layer3 = tf.layers.conv2d(vgg_layer3_out,  # input layer
+                                       num_classes,
+                                       1,  # kernel size
+                                       strides=(1, 1),
+                                       padding="same",
+                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3),
+                                       kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
 
     skip2 = tf.add(upsample2, conv_1x1_layer3)
-    output_layer = tf.layers.conv2d_transpose( skip2, #input layer
-                                            num_classes,
-                                            16, #kernel size
-                                            strides=8,
-                                            padding="same",
-                                            kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3), kernel_initializer=tf.truncated_normal_initializer(stddev=0.01),
-                                            name="output_layer")
+    output_layer = tf.layers.conv2d_transpose(skip2,  # input layer
+                                              num_classes,
+                                              16,  # kernel size
+                                              strides=8,
+                                              padding="same",
+                                              kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3),
+                                              kernel_initializer=tf.truncated_normal_initializer(stddev=0.01),
+                                              name="output_layer")
 
     return output_layer
+
+
 tests.test_layers(layers)
 
 
@@ -128,6 +140,8 @@ def optimize(nn_last_layer, correct_label, learning_rate, num_classes):
     train_op = optimizer.minimize(cross_entropy_loss)
 
     return logits, train_op, cross_entropy_loss
+
+
 tests.test_optimize(optimize)
 
 
@@ -149,10 +163,15 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
 
     for epoch in range(epochs):
         for image, label in get_batches_fn(batch_size):
-            #training
-            sess.run(train_op, feed_dict={input_image: image, correct_label: label, keep_prob: 0.8, learning_rate: 0.001})
+            # training
+            sess.run(train_op,
+                     feed_dict={input_image: image, correct_label: label, keep_prob: 0.8, learning_rate: 0.001})
 
-        print('Epoch {0} cross entropy: {1}'.format(epoch, sess.run(cross_entropy_loss, feed_dict={input_image: image, correct_label: label, keep_prob: 1.0})))
+        print('Epoch {0} cross entropy: {1}'.format(epoch, sess.run(cross_entropy_loss,
+                                                                    feed_dict={input_image: image, correct_label: label,
+                                                                               keep_prob: 1.0})))
+
+
 tests.test_train_nn(train_nn)
 
 
@@ -166,7 +185,7 @@ def train_model():
     epochs = 6
     batch_size = 5
 
-    # Download pretrained vgg model
+    # Download pre-trained vgg model
     helper.maybe_download_pretrained_vgg(data_dir)
 
     # Defining Tensors
@@ -196,7 +215,7 @@ def train_model():
         # Train NN using the train_nn function
         sess.run(tf.global_variables_initializer())
         train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_loss, input_image,
-                     correct_label, keep_prob, learning_rate)
+                 correct_label, keep_prob, learning_rate)
 
         # Save the trained model
         saver = tf.train.Saver()
@@ -216,7 +235,7 @@ def perform_prediction():
         # Restore the trained graph for prediction
         # Load meta graph and restore weights
         saver = tf.train.import_meta_graph('my_model.meta')
-        saver.restore(sess,tf.train.latest_checkpoint('./'))
+        saver.restore(sess, tf.train.latest_checkpoint('./'))
 
         graph = tf.get_default_graph()
         output_layer = graph.get_tensor_by_name('output_layer:0')
@@ -227,6 +246,7 @@ def perform_prediction():
         helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, input_image)
 
         # OPTIONAL: Apply the trained model to a video
+
 
 if __name__ == '__main__':
     train_model()
