@@ -64,7 +64,8 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
                                        strides=(1, 1),
                                        padding="same",
                                        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3),
-                                       kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
+                                       kernel_initializer=tf.truncated_normal_initializer(stddev=0.01),
+                                       name="conv_1x1_layer7")
 
     # Upsample output of the conv_1x1 layer by 2
     upsample1 = tf.layers.conv2d_transpose(conv_1x1_layer7,  # input layer
@@ -73,7 +74,8 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
                                            strides=2,
                                            padding="same",
                                            kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3),
-                                           kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
+                                           kernel_initializer=tf.truncated_normal_initializer(stddev=0.01),
+                                           name="upsample1")
 
     # Passing vgg_layer4_out through convolution operation to ensure dimensions match for the add operation
     conv_1x1_layer4 = tf.layers.conv2d(vgg_layer4_out,  # input layer
@@ -82,16 +84,18 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
                                        strides=(1, 1),
                                        padding="same",
                                        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3),
-                                       kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
+                                       kernel_initializer=tf.truncated_normal_initializer(stddev=0.01),
+                                       name="conv_1x1_layer4")
 
-    skip1 = tf.add(upsample1, conv_1x1_layer4)
+    skip1 = tf.add(upsample1, conv_1x1_layer4, name="skip1")
     upsample2 = tf.layers.conv2d_transpose(skip1,
                                            num_classes,
                                            4,  # kernel size
                                            strides=2,
                                            padding="same",
                                            kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3),
-                                           kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
+                                           kernel_initializer=tf.truncated_normal_initializer(stddev=0.01),
+                                           name="upsample2")
 
     # Passing vgg_layer3_out through convolution operation to ensure dimensions match for the add operation
     conv_1x1_layer3 = tf.layers.conv2d(vgg_layer3_out,  # input layer
@@ -100,9 +104,10 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
                                        strides=(1, 1),
                                        padding="same",
                                        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3),
-                                       kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
+                                       kernel_initializer=tf.truncated_normal_initializer(stddev=0.01),
+                                       name="conv_1x1_layer3")
 
-    skip2 = tf.add(upsample2, conv_1x1_layer3)
+    skip2 = tf.add(upsample2, conv_1x1_layer3, name="skip2")
     output_layer = tf.layers.conv2d_transpose(skip2,  # input layer
                                               num_classes,
                                               16,  # kernel size
@@ -128,13 +133,13 @@ def optimize(nn_last_layer, correct_label, learning_rate, num_classes):
     :return: Tuple of (logits, train_op, cross_entropy_loss)
     """
 
-    logits = tf.reshape(nn_last_layer, (-1, num_classes))
-    labels = tf.reshape(correct_label, (-1, num_classes))
+    logits = tf.reshape(nn_last_layer, (-1, num_classes), name="logits")
+    labels = tf.reshape(correct_label, (-1, num_classes), name="labels")
 
-    cross_entropy_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=labels))
+    cross_entropy_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=labels), name="cross_entropy_loss")
 
     # Choose training optimizer
-    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, name="optimizer")
 
     # Define a training step
     train_op = optimizer.minimize(cross_entropy_loss)
@@ -182,8 +187,8 @@ def train_model():
     tests.test_for_kitti_dataset(data_dir)
 
     # tunable parameters
-    epochs = 6
-    batch_size = 5
+    epochs = 35
+    batch_size = 16
 
     # Download pre-trained vgg model
     helper.maybe_download_pretrained_vgg(data_dir)
@@ -222,14 +227,22 @@ def train_model():
         saver.save(sess, 'my_model')
 
 
+def list_graph_tensors():
+    with tf.Session() as sess:
+        # Restore the trained graph for prediction
+        # Load meta graph and restore weights
+        saver = tf.train.import_meta_graph('my_model.meta')
+        saver.restore(sess, tf.train.latest_checkpoint('./'))
+
+        graph = tf.get_default_graph()
+        for n in graph.as_graph_def().node:
+            print(str(n.name), str(n.op))
+
+
 def perform_prediction():
-    num_classes = 2
     data_dir = './data'
     runs_dir = './runs'
     image_shape = (160, 576)
-
-    # Defining Tensors
-    keep_prob = tf.placeholder(tf.float32)
 
     with tf.Session() as sess:
         # Restore the trained graph for prediction
@@ -238,11 +251,12 @@ def perform_prediction():
         saver.restore(sess, tf.train.latest_checkpoint('./'))
 
         graph = tf.get_default_graph()
-        output_layer = graph.get_tensor_by_name('output_layer:0')
-        logits = tf.reshape(output_layer, (-1, num_classes))
+        logits = graph.get_tensor_by_name('logits:0')
         input_image = graph.get_tensor_by_name('image_input:0')
+        keep_prob = graph.get_tensor_by_name('keep_prob:0')
 
         # Save inference data using helper.save_inference_samples
+        # sess.run(tf.global_variables_initializer())
         helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, input_image)
 
         # OPTIONAL: Apply the trained model to a video
@@ -250,4 +264,5 @@ def perform_prediction():
 
 if __name__ == '__main__':
     train_model()
-    perform_prediction()
+    # perform_prediction()
+    # list_graph_tensors()
