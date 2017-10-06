@@ -247,10 +247,11 @@ def perform_prediction():
     with tf.Session() as sess:
         # Restore the trained graph for prediction
         # Load meta graph and restore weights
-        saver = tf.train.import_meta_graph('my_model.meta')
-        saver.restore(sess, tf.train.latest_checkpoint('./'))
+        saver = tf.train.import_meta_graph('../trial_2/my_model.meta')
+        saver.restore(sess, tf.train.latest_checkpoint('../trial_2/'))
 
         graph = tf.get_default_graph()
+
         logits = graph.get_tensor_by_name('logits:0')
         input_image = graph.get_tensor_by_name('image_input:0')
         keep_prob = graph.get_tensor_by_name('keep_prob:0')
@@ -263,6 +264,6 @@ def perform_prediction():
 
 
 if __name__ == '__main__':
-    train_model()
-    # perform_prediction()
+    # train_model()
+    perform_prediction()
     # list_graph_tensors()
