@@ -170,3 +170,41 @@ Epoch 32 cross entropy: 0.04025376960635185
 Epoch 33 cross entropy: 0.030969437211751938
 Epoch 34 cross entropy: 0.059104666113853455
 ```
+
+[//]: # (Image References)
+[trial1_1]: ./runs/trial_1/um_000001.png
+[trial1_3]: ./runs/trial_1/um_000003.png
+[trial1_9]: ./runs/trial_1/um_000009.png
+
+[trial2_1]: ./runs/trial_2/um_000001.png
+[trial2_3]: ./runs/trial_2/um_000003.png
+[trial2_9]: ./runs/trial_2/um_000009.png
+
+[trial3_1]: ./runs/trial_3/um_000001.png
+[trial3_3]: ./runs/trial_3/um_000003.png
+[trial3_9]: ./runs/trial_3/um_000009.png
+
+### Image output
+#### Trial 1
+![Trial 1 Urban 1][trial1_1]
+
+![Trial 1 Urban 3][trial1_3]
+
+![Trial 1 Urban 9][trial1_9]
+
+#### Trial 2
+![Trial 2 Urban 1][trial2_1]
+
+![Trial 2 Urban 3][trial2_3]
+
+![Trial 2 Urban 9][trial2_9]
+
+#### Trial 3
+![Trial 3 Urban 1][trial3_1]
+
+![Trial 3 Urban 3][trial3_3]
+
+![Trial 3 Urban 9][trial3_9]
+
+### Conclusion
+Based on images above, we conclude that the first trial parameters are better suited for this project.
