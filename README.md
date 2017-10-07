@@ -208,3 +208,7 @@ Epoch 34 cross entropy: 0.059104666113853455
 
 ### Conclusion
 Based on images above, we conclude that the first trial parameters are better suited for this project.
+
+### Reference
+The fully convolutional network used in this work is based on
+[Fully Convolutional Networks for Semantic Segmentation](https://people.eecs.berkeley.edu/~jonlong/long_shelhamer_fcn.pdf) paper.
